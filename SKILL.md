@@ -202,6 +202,8 @@ export function processData(
 
 ### Function Design
 
+Use `function` declarations for named top-level or exported APIs. Use arrow functions for inline callbacks and when lexical `this` binding is required.
+
 ```typescript
 // Pure functions preferred
 function transform(input: Input): Output {
@@ -220,6 +222,9 @@ function parse(input: Buffer): ParsedData;
 function parse(input: string | Buffer): ParsedData {
   // Implementation
 }
+
+// Use arrows for short callbacks
+const names = users.map((user) => user.name);
 ```
 
 ### Interface Design
