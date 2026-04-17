@@ -500,6 +500,72 @@ class Dog extends Animal {
 }
 ```
 
+### Mutable Static State
+
+```typescript
+// WRONG: Mutable static state behaves like hidden global state.
+class RateLimiter {
+  private static requestsByUser: Record<string, number> = {};
+
+  static register(userId: string): number {
+    const next = (RateLimiter.requestsByUser[userId] ?? 0) + 1;
+    RateLimiter.requestsByUser[userId] = next;
+    return next;
+  }
+}
+
+// CORRECT: Keep static members immutable and move state to instances.
+class RateLimiter {
+  private static readonly maxPerMinute = 60;
+  private readonly requestsByUser = new Map<string, number>();
+
+  register(userId: string): boolean {
+    const next = (this.requestsByUser.get(userId) ?? 0) + 1;
+    this.requestsByUser.set(userId, next);
+    return next <= RateLimiter.maxPerMinute;
+  }
+}
+```
+
+### Abstract Class Without Shared Logic
+
+```typescript
+// WRONG: Abstract class used only as a contract.
+abstract class Notifier {
+  abstract send(message: string): Promise<void>;
+}
+
+class EmailNotifier extends Notifier {
+  async send(message: string): Promise<void> {
+    await emailClient.send(message);
+  }
+}
+
+// CORRECT: Prefer interface for contracts.
+interface Notifier {
+  send(message: string): Promise<void>;
+}
+
+class EmailNotifier implements Notifier {
+  async send(message: string): Promise<void> {
+    await emailClient.send(message);
+  }
+}
+
+// CORRECT: Use abstract class only when sharing behavior.
+abstract class RetryingNotifier implements Notifier {
+  async send(message: string): Promise<void> {
+    try {
+      await this.deliver(message);
+    } catch {
+      await this.deliver(message);
+    }
+  }
+
+  protected abstract deliver(message: string): Promise<void>;
+}
+```
+
 ## Import Errors
 
 ### Default Imports
@@ -549,5 +615,7 @@ import { type User, createUser } from "./user";
 | God classes         | Too many reasons to change | Orchestrator + collaborators |
 | Concrete coupling   | Hard to test or replace | Inject interfaces in core logic |
 | Fat interfaces      | Leaky contracts    | Segregate by capability      |
+| Mutable static state | Hidden global behavior | `static readonly` + instance state |
+| Abstract-only base class | Unnecessary inheritance | Interface contract or shared abstract logic |
 | Default imports     | Hard to refactor   | Named imports                |
 | Type + value import | Bundle bloat       | `import type`                |

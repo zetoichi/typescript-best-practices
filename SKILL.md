@@ -228,6 +228,7 @@ const playbackService = new PlaybackBatchService(
 | Imports | Named imports | Default imports |
 | Errors | Result types | Throwing for flow control |
 | Design | SOLID + interface boundaries | God classes + concrete coupling |
+| Class patterns | `static` for type-level helpers; `abstract` for shared behavior | Mutable static state; inheritance-only design |
 | Loops | `for...of`, `.map()` | `for...in` on arrays |
 
 ## Code Generation Guidelines
@@ -319,6 +320,44 @@ interface ApiConfig {
 }
 ```
 
+### Class Design (`static` and `abstract`)
+
+Use `static` for behavior that belongs to the type itself and does not require instance state.
+Use `abstract` classes only when you need shared behavior plus extension points.
+
+```typescript
+class UserId {
+  private static readonly pattern = /^usr_[a-z0-9]{12}$/;
+
+  private constructor(readonly value: string) {}
+
+  static from(raw: string): UserId {
+    if (!UserId.pattern.test(raw)) {
+      throw new Error(`Invalid user id: ${raw}`);
+    }
+    return new UserId(raw);
+  }
+}
+
+type SaveResult = { success: true } | { success: false; reason: string };
+
+abstract class BaseRepository<T extends { readonly id: string }> {
+  async save(entity: T): Promise<SaveResult> {
+    if (!this.isValid(entity)) {
+      return { success: false, reason: "Invalid entity" };
+    }
+
+    return this.persist(entity);
+  }
+
+  protected isValid(entity: T): boolean {
+    return entity.id.length > 0;
+  }
+
+  protected abstract persist(entity: T): Promise<SaveResult>;
+}
+```
+
 ## Common Anti-Patterns
 
 Avoid these patterns when generating code:
@@ -333,6 +372,8 @@ Avoid these patterns when generating code:
 | God classes | Hard to test/maintain | Single responsibility |
 | Circular deps | Build/runtime issues | Dependency inversion |
 | Index signatures | Lose type info | Explicit properties |
+| Mutable static state | Hidden global behavior | `static readonly` or module constants |
+| Abstract-only passthrough | Unnecessary inheritance | Interface first, abstract for shared logic |
 
 See `references/anti-patterns/common-mistakes.md` for detailed examples.
 

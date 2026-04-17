@@ -1,6 +1,6 @@
 # Module Patterns
 
-Best practices for TypeScript module boundaries, exports, dependency injection, and circular dependency prevention.
+Best practices for TypeScript module boundaries, exports, dependency injection, class patterns, and circular dependency prevention.
 
 ## Export Patterns
 
@@ -173,6 +173,71 @@ const context: AppContext = {
 };
 
 const services = createServices(context);
+```
+
+## Static and Abstract Patterns
+
+### Static Members
+
+Use `static` when behavior belongs to the type, not to object instances.
+Prefer `static readonly` for constants and static factory methods for validated construction.
+Avoid mutable static state in application services.
+
+```typescript
+class CurrencyCode {
+  private static readonly valid = new Set(["USD", "EUR", "ARS"]);
+
+  private constructor(readonly value: string) {}
+
+  static from(raw: string): CurrencyCode {
+    const normalized = raw.trim().toUpperCase();
+    if (!CurrencyCode.valid.has(normalized)) {
+      throw new Error(`Unsupported currency: ${raw}`);
+    }
+    return new CurrencyCode(normalized);
+  }
+}
+
+const usd = CurrencyCode.from("usd");
+```
+
+### Abstract Classes
+
+Prefer interfaces for contracts.
+Use an abstract class when multiple implementations share meaningful behavior, invariants, or protected helpers.
+
+```typescript
+type PersistResult =
+  | { success: true }
+  | { success: false; reason: string };
+
+interface Repository<T> {
+  save(entity: T): Promise<PersistResult>;
+}
+
+abstract class BaseRepository<T extends { readonly id: string }>
+  implements Repository<T>
+{
+  async save(entity: T): Promise<PersistResult> {
+    if (!this.isValid(entity)) {
+      return { success: false, reason: "Invalid entity" };
+    }
+    return this.persist(entity);
+  }
+
+  protected isValid(entity: T): boolean {
+    return entity.id.length > 0;
+  }
+
+  protected abstract persist(entity: T): Promise<PersistResult>;
+}
+
+class UserRepository extends BaseRepository<User> {
+  protected async persist(entity: User): Promise<PersistResult> {
+    await db.users.upsert(entity);
+    return { success: true };
+  }
+}
 ```
 
 ## Avoiding Circular Dependencies
@@ -370,3 +435,5 @@ export type { User } from "./user.ts";
 8. **Initialize Explicitly**: Don't rely on import side effects
 9. **Feature-Based Organization**: Group related code together
 10. **Keep Public API Small**: Export only what's needed
+11. **Use Static Sparingly**: Type-level helpers and constants only
+12. **Use Abstract for Shared Logic**: Prefer interfaces for pure contracts
