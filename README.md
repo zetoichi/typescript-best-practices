@@ -19,8 +19,8 @@ Use this skill for:
 
 ## What it includes
 
-- Main guidance: `SKILL.md`
-- Deep-dive references under `references/`:
+- Main guidance: `skills/typescript-best-practices/SKILL.md`
+- Deep-dive references under `skills/typescript-best-practices/references/`:
   - `type-system/`
   - `patterns/`
   - `anti-patterns/`
