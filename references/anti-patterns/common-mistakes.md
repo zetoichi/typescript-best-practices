@@ -38,18 +38,18 @@ function processData(data: DataInput): string {
 ```typescript
 // WRONG: Non-null assertion can cause runtime errors
 function getUser(id: string): User {
-  const user = users.find(u => u.id === id);
-  return user!;  // Crashes if user not found
+  const user = users.find((u) => u.id === id);
+  return user!; // Crashes if user not found
 }
 
 // CORRECT: Handle the null case
 function getUser(id: string): User | null {
-  return users.find(u => u.id === id) ?? null;
+  return users.find((u) => u.id === id) ?? null;
 }
 
 // CORRECT: Throw descriptive error
 function getUser(id: string): User {
-  const user = users.find(u => u.id === id);
+  const user = users.find((u) => u.id === id);
   if (!user) {
     throw new Error(`User not found: ${id}`);
   }
@@ -63,7 +63,7 @@ function getUser(id: string): User {
 // WRONG: Type assertion bypasses type checking
 function handleEvent(event: unknown) {
   const mouseEvent = event as MouseEvent;
-  console.log(mouseEvent.clientX);  // Crashes if not MouseEvent
+  console.log(mouseEvent.clientX); // Crashes if not MouseEvent
 }
 
 // CORRECT: Use type guard
@@ -73,7 +73,7 @@ function isMouseEvent(event: unknown): event is MouseEvent {
 
 function handleEvent(event: unknown) {
   if (isMouseEvent(event)) {
-    console.log(event.clientX);  // Safe
+    console.log(event.clientX); // Safe
   }
 }
 ```
@@ -82,14 +82,14 @@ function handleEvent(event: unknown) {
 
 ```typescript
 // WRONG: Parameter has implicit any
-const doubled = numbers.map(n => n * 2);  // n is any if noImplicitAny is off
+const doubled = numbers.map((n) => n * 2); // n is any if noImplicitAny is off
 
 // CORRECT: Explicit parameter type
 const doubled = numbers.map((n: number) => n * 2);
 
 // CORRECT: Type the array properly
 const numbers: number[] = [1, 2, 3];
-const doubled = numbers.map(n => n * 2);  // n is inferred as number
+const doubled = numbers.map((n) => n * 2); // n is inferred as number
 ```
 
 ## Object and Array Errors
@@ -99,7 +99,7 @@ const doubled = numbers.map(n => n * 2);  // n is inferred as number
 ```typescript
 // WRONG: Function can mutate input
 function addItem(items: string[], item: string): string[] {
-  items.push(item);  // Mutates original array
+  items.push(item); // Mutates original array
   return items;
 }
 
@@ -118,18 +118,18 @@ function processItems(items: readonly string[]): void {
 
 ```typescript
 // WRONG: Assumes element exists
-function getFirst<T>(arr: T[]): T {
-  return arr[0];  // Could be undefined
+function getFirst<T>(arr: ReadonlyArray<T>): T {
+  return arr[0]; // Could be undefined
 }
 
 // CORRECT: With noUncheckedIndexedAccess
-function getFirst<T>(arr: T[]): T | undefined {
+function getFirst<T>(arr: ReadonlyArray<T>): T | undefined {
   return arr[0];
 }
 
 // CORRECT: Assert non-empty
-function getFirst<T>(arr: [T, ...T[]]): T {
-  return arr[0];  // Tuple guarantees at least one element
+function getFirst<T>(arr: readonly [T, ...T[]]): T {
+  return arr[0]; // Tuple guarantees at least one element
 }
 ```
 
@@ -139,7 +139,7 @@ function getFirst<T>(arr: [T, ...T[]]): T {
 // WRONG: Later properties overwrite earlier ones
 const config = {
   ...defaults,
-  host: userConfig.host,  // undefined overwrites default
+  host: userConfig.host, // undefined overwrites default
 };
 
 // CORRECT: Filter undefined values
@@ -177,7 +177,7 @@ export function calculateTotal(items: ReadonlyArray<Item>): number {
 // WRONG: Error silently ignored
 async function fetchData() {
   const response = await fetch("/api/data");
-  return response.json();  // What if fetch fails?
+  return response.json(); // What if fetch fails?
 }
 
 // CORRECT: Handle errors
@@ -199,7 +199,7 @@ async function fetchData(): Promise<Result<Data, FetchError>> {
 ```typescript
 // WRONG: Promise not awaited or handled
 function saveData(data: Data) {
-  api.save(data);  // Fire and forget - errors lost
+  api.save(data); // Fire and forget - errors lost
 }
 
 // CORRECT: Await the promise
@@ -209,7 +209,7 @@ async function saveData(data: Data): Promise<void> {
 
 // CORRECT: Handle with .catch if truly fire-and-forget
 function saveData(data: Data): void {
-  api.save(data).catch(error => {
+  api.save(data).catch((error) => {
     logger.error("Failed to save", error);
   });
 }
@@ -225,7 +225,7 @@ function process(value: string | null | undefined) {
   if (value) {
     return value.toUpperCase();
   }
-  return "default";  // Empty string "" returns "default"
+  return "default"; // Empty string "" returns "default"
 }
 
 // CORRECT: Explicit null check
@@ -247,7 +247,7 @@ function process(value: string | null | undefined) {
 ```typescript
 // WRONG: Continues execution with undefined
 const userName = user?.profile?.name;
-console.log(userName.toUpperCase());  // Error if undefined
+console.log(userName.toUpperCase()); // Error if undefined
 
 // CORRECT: Handle the undefined case
 const userName = user?.profile?.name;
@@ -267,17 +267,17 @@ console.log(userName.toUpperCase());
 ```typescript
 // WRONG: Numeric enums have surprising behavior
 enum Status {
-  Active,    // 0
-  Inactive,  // 1
-  Deleted,   // 2
+  Active, // 0
+  Inactive, // 1
+  Deleted, // 2
 }
 
-const status: Status = 999;  // No error!
+const status: Status = 999; // No error!
 
 // CORRECT: String literal union
 type Status = "active" | "inactive" | "deleted";
 
-const status: Status = "invalid";  // Error!
+const status: Status = "invalid"; // Error!
 
 // CORRECT: Const enum if you need enum-like syntax
 const Status = {
@@ -286,7 +286,7 @@ const Status = {
   Deleted: "deleted",
 } as const;
 
-type Status = typeof Status[keyof typeof Status];
+type Status = (typeof Status)[keyof typeof Status];
 ```
 
 ### Missing Exhaustive Check
@@ -328,8 +328,8 @@ function handleAction(action: Action) {
 ```typescript
 // WRONG: Everything is public by default
 class UserService {
-  db: Database;  // Exposed!
-  cache: Cache;  // Exposed!
+  db: Database; // Exposed!
+  cache: Cache; // Exposed!
 
   constructor(db: Database, cache: Cache) {
     this.db = db;
@@ -341,7 +341,7 @@ class UserService {
 class UserService {
   constructor(
     private readonly db: Database,
-    private readonly cache: Cache
+    private readonly cache: Cache,
   ) {}
 }
 ```
@@ -351,16 +351,22 @@ class UserService {
 ```typescript
 // WRONG: Accidental override (or not)
 class Animal {
-  speak() { console.log("..."); }
+  speak() {
+    console.log("...");
+  }
 }
 
 class Dog extends Animal {
-  speak() { console.log("Woof"); }  // Is this intentional?
+  speak() {
+    console.log("Woof");
+  } // Is this intentional?
 }
 
 // CORRECT: Explicit override
 class Dog extends Animal {
-  override speak() { console.log("Woof"); }
+  override speak() {
+    console.log("Woof");
+  }
 }
 ```
 
@@ -399,16 +405,16 @@ import { type User, createUser } from "./user";
 
 ## Quick Reference Table
 
-| Anti-Pattern | Problem | Solution |
-|--------------|---------|----------|
-| `any` type | No type checking | Use `unknown` + type guards |
-| `!` non-null | Runtime crashes | Null checks or Result types |
-| `as Type` | Bypasses checks | Type guards |
-| Mutable params | Side effects | `readonly` / spread |
-| Missing return type | Fragile API | Explicit return types |
-| Floating promises | Lost errors | `await` or `.catch()` |
-| `if (value)` | Excludes 0, "" | `!== null` / `!== undefined` |
-| Numeric enums | Accepts any number | String unions |
-| No exhaustive check | Missing cases | `never` in default |
-| Default imports | Hard to refactor | Named imports |
-| Type + value import | Bundle bloat | `import type` |
+| Anti-Pattern        | Problem            | Solution                     |
+| ------------------- | ------------------ | ---------------------------- |
+| `any` type          | No type checking   | Use `unknown` + type guards  |
+| `!` non-null        | Runtime crashes    | Null checks or Result types  |
+| `as Type`           | Bypasses checks    | Type guards                  |
+| Mutable params      | Side effects       | `readonly` / spread          |
+| Missing return type | Fragile API        | Explicit return types        |
+| Floating promises   | Lost errors        | `await` or `.catch()`        |
+| `if (value)`        | Excludes 0, ""     | `!== null` / `!== undefined` |
+| Numeric enums       | Accepts any number | String unions                |
+| No exhaustive check | Missing cases      | `never` in default           |
+| Default imports     | Hard to refactor   | Named imports                |
+| Type + value import | Bundle bloat       | `import type`                |
