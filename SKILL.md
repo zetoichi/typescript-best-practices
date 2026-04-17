@@ -18,6 +18,7 @@ Guide AI agents in writing high-quality TypeScript code. This skill provides cod
 ## When to Use This Skill
 
 Use this skill when:
+
 - Generating new TypeScript code
 - Reviewing TypeScript files for quality issues
 - Creating new modules, services, or components
@@ -26,6 +27,7 @@ Use this skill when:
 - Designing APIs or interfaces
 
 Do NOT use this skill when:
+
 - Working with pure JavaScript (no TypeScript)
 - Debugging runtime errors (use debugging tools)
 - Framework-specific patterns (React, Vue, etc. - use framework skills)
@@ -94,7 +96,7 @@ class ValidationError extends Error {
   constructor(
     message: string,
     readonly field: string,
-    readonly code: string
+    readonly code: string,
   ) {
     super(message);
     this.name = "ValidationError";
@@ -176,12 +178,13 @@ class PlaybackBatchService {
   constructor(
     private readonly store: BatchStore,
     private readonly reporter: BatchReporter,
-    private readonly maxBatchSize: number
+    private readonly maxBatchSize: number,
   ) {}
 
   async append(deviceId: string, event: PlaybackEvent): Promise<void> {
     const key = this.makeStorageKey(deviceId);
-    const current = (await this.store.get(key)) ?? this.makeEmptyBatch(deviceId);
+    const current =
+      (await this.store.get(key)) ?? this.makeEmptyBatch(deviceId);
     const updated = this.addEvent(current, event);
     const maybeFlushed = await this.flushIfNeeded(updated);
     await this.store.set(key, maybeFlushed);
@@ -210,26 +213,26 @@ class PlaybackBatchService {
 const playbackService = new PlaybackBatchService(
   new IndexedDbBatchStore(indexedDbClient),
   new HttpBatchReporter(httpClient),
-  100
+  100,
 );
 ```
 
 ## Quick Reference
 
-| Category | Prefer | Avoid |
-|----------|--------|-------|
-| Unknown types | `unknown` | `any` |
-| Collections | `ReadonlyArray<T>` | `T[]` for inputs |
-| Objects | `Readonly<T>` | Mutable by default |
-| Null checks | Optional chaining `?.` | `!= null` |
-| Type narrowing | Type guards | `as` assertions |
-| Return types | Explicit on exports | Inferred on exports |
-| Enums | String literal unions | Numeric enums |
-| Imports | Named imports | Default imports |
-| Errors | Result types | Throwing for flow control |
-| Design | SOLID + interface boundaries | God classes + concrete coupling |
+| Category       | Prefer                                                          | Avoid                                         |
+| -------------- | --------------------------------------------------------------- | --------------------------------------------- |
+| Unknown types  | `unknown`                                                       | `any`                                         |
+| Collections    | `ReadonlyArray<T>`                                              | `T[]` for inputs                              |
+| Objects        | `Readonly<T>`                                                   | Mutable by default                            |
+| Null checks    | Optional chaining `?.`                                          | `!= null`                                     |
+| Type narrowing | Type guards                                                     | `as` assertions                               |
+| Return types   | Explicit on exports                                             | Inferred on exports                           |
+| Enums          | String literal unions                                           | Numeric enums                                 |
+| Imports        | Named imports                                                   | Default imports                               |
+| Errors         | Result types                                                    | Throwing for flow control                     |
+| Design         | SOLID + interface boundaries                                    | God classes + concrete coupling               |
 | Class patterns | `static` for type-level helpers; `abstract` for shared behavior | Mutable static state; inheritance-only design |
-| Loops | `for...of`, `.map()` | `for...in` on arrays |
+| Loops          | `for...of`, `.map()`                                            | `for...in` on arrays                          |
 
 ## Code Generation Guidelines
 
@@ -260,7 +263,7 @@ const DEFAULT_OPTIONS: ModuleOptions = {
 // === Implementation ===
 export function processData(
   input: unknown,
-  options: Partial<ModuleOptions> = {}
+  options: Partial<ModuleOptions> = {},
 ): ModuleResult {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   // Implementation
@@ -362,17 +365,17 @@ abstract class BaseRepository<T extends { readonly id: string }> {
 
 Avoid these patterns when generating code:
 
-| Anti-Pattern | Problem | Solution |
-|--------------|---------|----------|
-| `any` type | Disables type checking | Use `unknown` and narrow |
-| `as` assertions | Runtime errors | Use type guards |
-| Non-null `!` | Null pointer errors | Optional chaining `?.` |
-| Mutable params | Unexpected mutations | `Readonly<T>` |
-| Magic strings | Typos, no autocomplete | String literal types |
-| God classes | Hard to test/maintain | Single responsibility |
-| Circular deps | Build/runtime issues | Dependency inversion |
-| Index signatures | Lose type info | Explicit properties |
-| Mutable static state | Hidden global behavior | `static readonly` or module constants |
+| Anti-Pattern              | Problem                 | Solution                                   |
+| ------------------------- | ----------------------- | ------------------------------------------ |
+| `any` type                | Disables type checking  | Use `unknown` and narrow                   |
+| `as` assertions           | Runtime errors          | Use type guards                            |
+| Non-null `!`              | Null pointer errors     | Optional chaining `?.`                     |
+| Mutable params            | Unexpected mutations    | `Readonly<T>`                              |
+| Magic strings             | Typos, no autocomplete  | String literal types                       |
+| God classes               | Hard to test/maintain   | Single responsibility                      |
+| Circular deps             | Build/runtime issues    | Dependency inversion                       |
+| Index signatures          | Lose type info          | Explicit properties                        |
+| Mutable static state      | Hidden global behavior  | `static readonly` or module constants      |
 | Abstract-only passthrough | Unnecessary inheritance | Interface first, abstract for shared logic |
 
 See `references/anti-patterns/common-mistakes.md` for detailed examples.
@@ -380,11 +383,13 @@ See `references/anti-patterns/common-mistakes.md` for detailed examples.
 ## Additional Resources
 
 ### Type System Deep Dives
+
 - `references/type-system/advanced-types.md` - Generics, conditional types, mapped types
 - `references/type-system/type-guards.md` - Type narrowing techniques
 - `references/type-system/utility-types.md` - Built-in utility types
 
 ### Pattern Guides
+
 - `references/patterns/error-handling.md` - Result types, typed errors
 - `references/patterns/async-patterns.md` - Async/await best practices
 - `references/patterns/functional-patterns.md` - Immutability, composition
@@ -392,10 +397,5 @@ See `references/anti-patterns/common-mistakes.md` for detailed examples.
 - `references/patterns/solid-principles.md` - SOLID principles for TypeScript implementation
 
 ### Architecture
-- `references/architecture/api-design.md` - Interface design, versioning
 
-### Templates
-- `assets/templates/module-template.ts.md` - Module starter template
-- `assets/templates/service-template.ts.md` - Service class template
-- `assets/tsconfig-presets/strict.json` - Maximum strictness config
-- `assets/tsconfig-presets/recommended.json` - Balanced defaults
+- `references/architecture/api-design.md` - Interface design, versioning
