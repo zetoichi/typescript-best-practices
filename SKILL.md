@@ -1,6 +1,6 @@
 ---
 name: typescript-best-practices
-description: "Guide AI agents through TypeScript coding best practices including type safety, error handling, code organization, and architecture patterns. This skill should be used when generating TypeScript code, reviewing TypeScript files, creating new TypeScript modules, refactoring JavaScript to TypeScript, or when the user asks about TypeScript patterns, types, or coding standards. Keywords: typescript, types, coding standards, best practices, type safety, generics, architecture, refactoring."
+description: "Guide AI agents through TypeScript coding best practices including type safety, error handling, code organization, architecture patterns, and SOLID design. This skill should be used when generating TypeScript code, reviewing TypeScript files, creating new TypeScript modules, refactoring JavaScript to TypeScript, or when the user asks about TypeScript patterns, types, or coding standards. Keywords: typescript, types, coding standards, best practices, type safety, generics, architecture, refactoring, solid."
 license: MIT
 compatibility: Applicable to any TypeScript codebase.
 metadata:
@@ -148,6 +148,72 @@ export { User, createUser } from "./user.ts";
 export { validateEmail } from "./validation.ts";
 ```
 
+### 5. SOLID for TypeScript Implementation
+
+Apply SOLID as implementation rules, not abstract theory:
+
+```typescript
+interface BatchStore {
+  get(key: string): Promise<PlaybackBatch | null>;
+  set(key: string, batch: PlaybackBatch): Promise<void>;
+}
+
+interface BatchReporter {
+  report(batch: PlaybackBatch): Promise<boolean>;
+}
+
+interface PlaybackEvent {
+  readonly creativeId: string;
+  readonly playedAt: string;
+}
+
+interface PlaybackBatch {
+  readonly deviceId: string;
+  readonly events: ReadonlyArray<PlaybackEvent>;
+}
+
+class PlaybackBatchService {
+  constructor(
+    private readonly store: BatchStore,
+    private readonly reporter: BatchReporter,
+    private readonly maxBatchSize: number
+  ) {}
+
+  async append(deviceId: string, event: PlaybackEvent): Promise<void> {
+    const key = this.makeStorageKey(deviceId);
+    const current = (await this.store.get(key)) ?? this.makeEmptyBatch(deviceId);
+    const updated = this.addEvent(current, event);
+    const maybeFlushed = await this.flushIfNeeded(updated);
+    await this.store.set(key, maybeFlushed);
+  }
+
+  private makeStorageKey(deviceId: string): string {
+    return `playback:${deviceId}`;
+  }
+
+  private makeEmptyBatch(deviceId: string): PlaybackBatch {
+    return { deviceId, events: [] };
+  }
+
+  private addEvent(batch: PlaybackBatch, event: PlaybackEvent): PlaybackBatch {
+    return { ...batch, events: [...batch.events, event] };
+  }
+
+  private async flushIfNeeded(batch: PlaybackBatch): Promise<PlaybackBatch> {
+    if (batch.events.length < this.maxBatchSize) return batch;
+    const reported = await this.reporter.report(batch);
+    return reported ? { ...batch, events: [] } : batch;
+  }
+}
+
+// Composition root: wire concrete implementations at the boundary.
+const playbackService = new PlaybackBatchService(
+  new IndexedDbBatchStore(indexedDbClient),
+  new HttpBatchReporter(httpClient),
+  100
+);
+```
+
 ## Quick Reference
 
 | Category | Prefer | Avoid |
@@ -161,6 +227,7 @@ export { validateEmail } from "./validation.ts";
 | Enums | String literal unions | Numeric enums |
 | Imports | Named imports | Default imports |
 | Errors | Result types | Throwing for flow control |
+| Design | SOLID + interface boundaries | God classes + concrete coupling |
 | Loops | `for...of`, `.map()` | `for...in` on arrays |
 
 ## Code Generation Guidelines
@@ -281,6 +348,7 @@ See `references/anti-patterns/common-mistakes.md` for detailed examples.
 - `references/patterns/async-patterns.md` - Async/await best practices
 - `references/patterns/functional-patterns.md` - Immutability, composition
 - `references/patterns/module-patterns.md` - Exports, dependency injection
+- `references/patterns/solid-principles.md` - SOLID principles for TypeScript implementation
 
 ### Architecture
 - `references/architecture/api-design.md` - Interface design, versioning

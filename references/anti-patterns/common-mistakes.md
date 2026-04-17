@@ -321,6 +321,136 @@ function handleAction(action: Action) {
 }
 ```
 
+## SOLID Design Errors
+
+### God Class Orchestration
+
+```typescript
+// WRONG: One class owns parsing, persistence, batching, and reporting.
+class PlaybackManager {
+  async handle(rawEvent: unknown): Promise<void> {
+    const event = parseEvent(rawEvent);
+    const key = `playback:${event.deviceId}`;
+    const batch = (await storage.get(key)) ?? {
+      deviceId: event.deviceId,
+      events: [],
+    };
+
+    batch.events.push(event);
+    if (batch.events.length >= 100) {
+      await http.post("/report", batch);
+      batch.events = [];
+    }
+
+    await storage.set(key, batch);
+  }
+}
+
+// CORRECT: Orchestrator + focused collaborators + smaller private methods.
+class PlaybackCoordinator {
+  constructor(
+    private readonly parser: EventParser,
+    private readonly store: BatchStore,
+    private readonly reporter: BatchReporter,
+  ) {}
+
+  async handle(rawEvent: unknown): Promise<void> {
+    const event = this.parser.parse(rawEvent);
+    const current = await this.loadBatch(event.deviceId);
+    const updated = this.appendEvent(current, event);
+    await this.persistAndMaybeReport(updated);
+  }
+
+  private loadBatch(deviceId: string): Promise<PlaybackBatch> {
+    return this.store.get(deviceId);
+  }
+
+  private appendEvent(
+    batch: PlaybackBatch,
+    event: PlaybackEvent,
+  ): PlaybackBatch {
+    return { ...batch, events: [...batch.events, event] };
+  }
+
+  private async persistAndMaybeReport(batch: PlaybackBatch): Promise<void> {
+    if (batch.events.length >= 100) {
+      const reported = await this.reporter.report(batch);
+      const normalized = reported ? { ...batch, events: [] } : batch;
+      await this.store.set(normalized.deviceId, normalized);
+      return;
+    }
+
+    await this.store.set(batch.deviceId, batch);
+  }
+}
+```
+
+### Concrete Dependencies in Core Logic
+
+```typescript
+// WRONG: Core service creates concrete dependencies directly.
+class BatchReporterService {
+  private readonly http = new HttpClient();
+  private readonly logger = new Logger();
+
+  async report(batch: PlaybackBatch): Promise<void> {
+    await this.http.post("/report", batch);
+    this.logger.info("Reported batch");
+  }
+}
+
+// CORRECT: Depend on abstractions and inject dependencies.
+interface HttpPort {
+  post(url: string, body: unknown): Promise<void>;
+}
+
+interface LoggerPort {
+  info(message: string): void;
+}
+
+class BatchReporterService {
+  constructor(
+    private readonly http: HttpPort,
+    private readonly logger: LoggerPort,
+  ) {}
+
+  async report(batch: PlaybackBatch): Promise<void> {
+    await this.http.post("/report", batch);
+    this.logger.info("Reported batch");
+  }
+}
+
+// Composition root.
+const service = new BatchReporterService(
+  new FetchHttpClient(fetch),
+  new ConsoleLogger(),
+);
+```
+
+### Fat Interfaces
+
+```typescript
+// WRONG: Interface bundles unrelated capabilities.
+interface PlaybackService {
+  createBatch(deviceId: string): Promise<void>;
+  reportBatch(batch: PlaybackBatch): Promise<boolean>;
+  syncConfiguration(): Promise<void>;
+}
+
+// CORRECT: Split by capability (interface segregation).
+interface BatchCreator {
+  createBatch(deviceId: string): Promise<void>;
+}
+
+interface BatchReporter {
+  reportBatch(batch: PlaybackBatch): Promise<boolean>;
+}
+
+interface ConfigSync {
+  syncConfiguration(): Promise<void>;
+}
+```
+
 ## Class Errors
 
 ### Public By Default
@@ -416,5 +546,8 @@ import { type User, createUser } from "./user";
 | `if (value)`        | Excludes 0, ""     | `!== null` / `!== undefined` |
 | Numeric enums       | Accepts any number | String unions                |
 | No exhaustive check | Missing cases      | `never` in default           |
+| God classes         | Too many reasons to change | Orchestrator + collaborators |
+| Concrete coupling   | Hard to test or replace | Inject interfaces in core logic |
+| Fat interfaces      | Leaky contracts    | Segregate by capability      |
 | Default imports     | Hard to refactor   | Named imports                |
 | Type + value import | Bundle bloat       | `import type`                |
