@@ -336,13 +336,23 @@ async function getUserPosts(userId: string): AsyncResult<Post[]> {
 ```typescript
 async function collectResults<T, E>(
   results: Array<Promise<Result<T, E>>>
-): Promise<Result<T[], E>> {
-  const settled = await Promise.all(results);
+): Promise<Result<T[], E | Error>> {
+  const settled = await Promise.allSettled(results);
 
-  const errors: E[] = [];
+  const errors: Array<E | Error> = [];
   const values: T[] = [];
 
-  for (const result of settled) {
+  for (const settledResult of settled) {
+    if (settledResult.status === "rejected") {
+      const rejectionError =
+        settledResult.reason instanceof Error
+          ? settledResult.reason
+          : new Error(String(settledResult.reason));
+      errors.push(rejectionError);
+      continue;
+    }
+
+    const result = settledResult.value;
     if (result.success) {
       values.push(result.value);
     } else {
@@ -360,13 +370,23 @@ async function collectResults<T, E>(
 // Collect all errors
 async function collectAllResults<T, E>(
   results: Array<Promise<Result<T, E>>>
-): Promise<Result<T[], E[]>> {
-  const settled = await Promise.all(results);
+): Promise<Result<T[], Array<E | Error>>> {
+  const settled = await Promise.allSettled(results);
 
-  const errors: E[] = [];
+  const errors: Array<E | Error> = [];
   const values: T[] = [];
 
-  for (const result of settled) {
+  for (const settledResult of settled) {
+    if (settledResult.status === "rejected") {
+      const rejectionError =
+        settledResult.reason instanceof Error
+          ? settledResult.reason
+          : new Error(String(settledResult.reason));
+      errors.push(rejectionError);
+      continue;
+    }
+
+    const result = settledResult.value;
     if (result.success) {
       values.push(result.value);
     } else {
