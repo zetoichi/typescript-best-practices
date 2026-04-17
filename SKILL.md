@@ -318,7 +318,7 @@ Examples:
 
 ### scaffold-module.ts
 
-Create properly structured TypeScript modules:
+Create TypeScript modules with consistent conventions:
 
 ```bash
 deno run --allow-read --allow-write scripts/scaffold-module.ts [options]
@@ -353,7 +353,6 @@ Examples:
 - `references/patterns/module-patterns.md` - Exports, dependency injection
 
 ### Architecture
-- `references/architecture/project-structure.md` - Directory organization
 - `references/architecture/api-design.md` - Interface design, versioning
 
 ### Templates

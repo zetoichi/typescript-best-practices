@@ -1,6 +1,6 @@
 # Module Patterns
 
-Best practices for TypeScript module organization, exports, dependency injection, and circular dependency prevention.
+Best practices for TypeScript module boundaries, exports, dependency injection, and circular dependency prevention.
 
 ## Export Patterns
 
@@ -62,52 +62,16 @@ export { Order, createOrder } from "./order.ts";
 // Use: import { User } from "./domain/user";
 ```
 
-## Module Organization
+## Module Boundaries
 
-### Feature-Based Structure
+Choose module placement and naming based on the host codebase's established conventions.
+Avoid prescribing one "correct" directory layout across projects.
 
-```
-src/
-├── features/
-│   ├── auth/
-│   │   ├── index.ts          # Public API
-│   │   ├── auth.service.ts
-│   │   ├── auth.types.ts
-│   │   └── auth.utils.ts
-│   ├── users/
-│   │   ├── index.ts
-│   │   ├── user.service.ts
-│   │   ├── user.types.ts
-│   │   └── user.repository.ts
-│   └── products/
-│       ├── index.ts
-│       ├── product.service.ts
-│       └── product.types.ts
-├── shared/
-│   ├── types/
-│   ├── utils/
-│   └── constants/
-└── index.ts                   # App entry point
-```
-
-### Layer-Based Structure
-
-```
-src/
-├── domain/           # Business logic, entities
-│   ├── user.ts
-│   └── product.ts
-├── application/      # Use cases, services
-│   ├── user.service.ts
-│   └── product.service.ts
-├── infrastructure/   # External concerns
-│   ├── database/
-│   ├── api/
-│   └── cache/
-└── presentation/     # UI, controllers
-    ├── routes/
-    └── controllers/
-```
+Guidelines:
+- Keep each module focused on one responsibility.
+- Prefer explicit public APIs (`index.ts` with named exports) over wildcard exports.
+- Keep internal helpers unexported unless they are shared.
+- Co-locate related types and behavior when it improves discoverability.
 
 ## Dependency Injection
 
