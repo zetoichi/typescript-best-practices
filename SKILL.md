@@ -2,7 +2,7 @@
 name: typescript-best-practices
 description: "Guide AI agents through TypeScript coding best practices including type safety, error handling, code organization, and architecture patterns. This skill should be used when generating TypeScript code, reviewing TypeScript files, creating new TypeScript modules, refactoring JavaScript to TypeScript, or when the user asks about TypeScript patterns, types, or coding standards. Keywords: typescript, types, coding standards, best practices, type safety, generics, architecture, refactoring."
 license: MIT
-compatibility: Requires Deno for analysis scripts. Applicable to any TypeScript codebase.
+compatibility: Applicable to any TypeScript codebase.
 metadata:
   author: agent-skills
   version: "1.0"
@@ -13,7 +13,7 @@ metadata:
 
 # TypeScript Best Practices
 
-Guide AI agents in writing high-quality TypeScript code. This skill provides coding standards, architecture patterns, and tools for analysis and scaffolding.
+Guide AI agents in writing high-quality TypeScript code. This skill provides coding standards, architecture patterns, and practical reference guidance.
 
 ## When to Use This Skill
 
@@ -268,76 +268,6 @@ Avoid these patterns when generating code:
 | Index signatures | Lose type info | Explicit properties |
 
 See `references/anti-patterns/common-mistakes.md` for detailed examples.
-
-## Scripts Reference
-
-### analyze.ts
-
-Analyze TypeScript code for quality issues:
-
-```bash
-deno run --allow-read scripts/analyze.ts <path> [options]
-
-Options:
-  --strict        Enable all checks
-  --json          Output JSON for programmatic use
-  --fix-hints     Show suggested fixes
-
-Examples:
-  # Analyze a file
-  deno run --allow-read scripts/analyze.ts ./src/utils.ts
-
-  # Analyze directory with strict mode
-  deno run --allow-read scripts/analyze.ts ./src --strict
-
-  # JSON output for CI
-  deno run --allow-read scripts/analyze.ts ./src --json
-```
-
-### generate-types.ts
-
-Generate TypeScript types from JSON data:
-
-```bash
-deno run --allow-read --allow-write scripts/generate-types.ts <input> [options]
-
-Options:
-  --name <name>   Root type name (default: inferred)
-  --output <path> Output file path
-  --readonly      Generate readonly types
-  --interface     Use interface instead of type
-
-Examples:
-  # Generate from JSON file
-  deno run --allow-read scripts/generate-types.ts ./data.json --name Config
-
-  # Generate readonly interface
-  deno run --allow-read --allow-write scripts/generate-types.ts ./api-response.json \
-    --interface --readonly --output ./types/api.ts
-```
-
-### scaffold-module.ts
-
-Create TypeScript modules with consistent conventions:
-
-```bash
-deno run --allow-read --allow-write scripts/scaffold-module.ts [options]
-
-Options:
-  --name <name>   Module name (required)
-  --path <path>   Target directory (default: ./src)
-  --type <type>   Type: service, util, component
-  --with-tests    Include test file
-
-Examples:
-  # Create a utility module
-  deno run --allow-read --allow-write scripts/scaffold-module.ts \
-    --name "string-utils" --type util
-
-  # Create a service with tests
-  deno run --allow-read --allow-write scripts/scaffold-module.ts \
-    --name "user-service" --type service --with-tests
-```
 
 ## Additional Resources
 
